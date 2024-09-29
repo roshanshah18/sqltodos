@@ -1,66 +1,147 @@
 import { NextFunction, Request, Response } from "express";
-import { TodoModel } from "../models/todo-model";
+import { TodoModel, TTodo } from "../models/todo-model";
+import {
+  createTodo,
+  deleteTodo,
+  getAllTodos,
+  gettodoId,
+  updatetodo,
+} from "../database";
 
-export function getTodoController(
+export async function getTodoController(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  const todoId = req.params.todoId;
+  try {
+    const id = req.params.todoId;
 
-  if (!todoId) {
-    next("Please provide valid todoId");
-    return;
-  }
+    if (!id) {
+      console.log("Please provide valid todoId");
+      return;
+    }
 
-  const myTodoModel = new TodoModel();
+    const result = await gettodoId(parseInt(id));
 
-  const todo = myTodoModel.getTodo(parseInt(todoId as string));
+    if (!result) {
+      return res.status(404).json({
+        messgae: "todo not found",
+      });
+    }
 
-  if (!todo) {
-    res.status(404).json({
-      messagge: "todo not found",
+    res.json({
+      data: null,
+      message: "Todo is successfully Taken",
     });
-    return;
+  } catch (error) {
+    console.error("Error Ocuured", error);
+    res.status(500).json({
+      message: "something went wrong",
+    });
   }
-
-  res.json({
-    data: todo,
-  });
 }
 
-export function createTodoController(
+export async function createTodoController(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
-  console.log("request", req);
-  const body = req.body;
+  try {
+    const body = req.body;
 
-  console.log("body", body);
+    console.log("body", body);
 
-  const name = body.name;
-  const status = body.status;
+    const name = body.name;
 
-  // !FIXME: write error handling and data validation
+    const result = await createTodo(name);
 
-  const myTodoModel = new TodoModel();
-  const createdTodo = myTodoModel.createTodo(name, status);
+    console.log("result", result);
 
-  res.status(201).json({
-    data: createdTodo,
-    message: "Todo is created successfully!!",
-  });
+    res.status(201).json({
+      data: result,
+      message: "todo created successfully",
+    });
+  } catch (error: any) {
+    console.error(error);
+    next(error.message);
+  }
 }
 
-function updateTodoController() {
-  //
+export async function updateTodoController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const id = req.params.todoId;
+    const name = req.body.name;
+    console.log(id);
+
+    if (!id) {
+      next("please provide id");
+      return;
+    }
+
+    const result = await updatetodo(name, parseInt(id));
+
+    console.log("result", result);
+
+    res.status(201).json({
+      data: result,
+      message: "todo updated successfully",
+    });
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-function deleteTodoController() {
-  //
+export async function deleteTodoController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const id = req.params.todoId;
+
+    if (!id) {
+      next("Please provide valid todoId");
+      return;
+    }
+
+    const result = await deleteTodo(parseInt(id));
+
+    if (!result) {
+      return res.status(404).json({
+        messgae: "todo not found",
+      });
+    }
+
+    res.status(200).json({
+      data: result,
+      message: "Todo is successfully deleted",
+    });
+  } catch (error) {
+    console.error("Error Ocuured", error);
+    res.status(500).json({
+      message: "something went wrong",
+    });
+  }
 }
 
-function getAllTodoController() {
-  //
+export async function getAllTodoController(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const result = await getAllTodos();
+    res.json({
+      data: result,
+    });
+  } catch (error) {
+    console.error("error occured", error);
+    res.status(500).json({
+      message: "something went wrong",
+    });
+  }
 }
